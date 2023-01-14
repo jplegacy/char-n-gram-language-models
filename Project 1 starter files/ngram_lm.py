@@ -57,14 +57,17 @@ class NgramModel(object):
     ''' A basic n-gram model using add-k smoothing '''
 
     def __init__(self, c, k):
-        pass
+        self.context_len = c
+        self.k_smoothing_co = k
+        self.vocab = ()
 
     def get_vocab(self):
         ''' Returns the set of characters in the vocab '''
-        pass
+        return self.vocab
 
     def update(self, text):
         ''' Updates the model n-grams based on text '''
+        ngramlist = ngrams(self.context_len, text)
         pass
 
     def prob(self, context, char):
