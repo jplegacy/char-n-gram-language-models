@@ -17,7 +17,20 @@ def start_pad(c):
 def ngrams(c, text):
     ''' Returns the ngrams of the text as tuples where the first element is
         the length-c context and the second is the character '''
-    pass
+
+    total_ngrams = []
+    padded_text = start_pad(c) + text
+    return ngram_step(padded_text, 0, c, total_ngrams)
+
+
+def ngram_step(text:str, startIndex:int, endingIndex:int, total_ngrams:list):
+
+    if endingIndex >= len(text):
+        return total_ngrams
+
+    ngram = (text[startIndex: endingIndex], text[endingIndex])
+    total_ngrams.append(ngram)
+    return ngram_step(text, startIndex + 1, endingIndex + 1, total_ngrams)
 
 def create_ngram_model(model_class, path, c=2, k=0):
     ''' Creates and returns a new n-gram model trained on the entire text
@@ -95,6 +108,9 @@ class NgramModelWithInterpolation(NgramModel):
 ################################################################################
 # Your N-Gram Model Experimentations
 ################################################################################
+
+print(ngrams(3,"abcde"))
+
 
 # Add all code you need for testing your language model as you are
 # developing it as well as your code for running your experiments
