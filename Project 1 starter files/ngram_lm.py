@@ -59,20 +59,35 @@ class NgramModel(object):
     def __init__(self, c, k):
         self.context_len = c
         self.k_smoothing_co = k
-        self.vocab = ()
-
+        self.vocab = set()
+        self.gram_collection = {}
     def get_vocab(self):
         ''' Returns the set of characters in the vocab '''
         return self.vocab
 
     def update(self, text):
         ''' Updates the model n-grams based on text '''
-        ngramlist = ngrams(self.context_len, text)
-        pass
+
+        newly_collected_grams = ngrams(self.context_len, text)
+
+        for ngram in newly_collected_grams:
+            self.vocab.add(ngram[1])
+
+            if ngram not in self.gram_collection:
+                self.gram_collection[ngram] = 0
+
+            self.gram_collection[ngram] += 1
 
     def prob(self, context, char):
         ''' Returns the probability of char appearing after context '''
-        pass
+        current_probability = 1
+        self.vocab.copy()
+        for char in context:
+            if char in self.vocab:
+                current_probability *= 1/(len(self.vocab))
+            else:
+                current_probability = 0
+        return current_probability
 
     def random_char(self, context):
         ''' Returns a random character based on the given context and the 
@@ -114,7 +129,19 @@ class NgramModelWithInterpolation(NgramModel):
 
 print(ngrams(3,"abcde"))
 
-
+m = NgramModel(1, 0)
+m.update("abab")
+print(m.get_vocab())
+# {’b’, ’a’}
+m.update("abcd")
+print(m.get_vocab())
+#{’b’, ’a’, ’c’, ’d’}
+print(m.prob("a", "b"))
+#1.0
+print(m.prob("~", "c"))
+#0.0
+print(m.prob("b", "c"))
+# 0.5
 # Add all code you need for testing your language model as you are
 # developing it as well as your code for running your experiments
 # here.
