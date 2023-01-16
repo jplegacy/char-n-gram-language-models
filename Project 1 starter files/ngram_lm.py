@@ -60,7 +60,8 @@ class NgramModel(object):
         self.context_len = c
         self.k_smoothing_co = k
         self.vocab = set()
-        self.gram_collection = {}
+        self.gram_collection = []
+
     def get_vocab(self):
         ''' Returns the set of characters in the vocab '''
         return self.vocab
@@ -72,21 +73,33 @@ class NgramModel(object):
 
         for ngram in newly_collected_grams:
             self.vocab.add(ngram[1])
+            self.gram_collection.append(ngram)
 
-            if ngram not in self.gram_collection:
-                self.gram_collection[ngram] = 0
+    #helper
+    def ngramInstanceCounter(self, context, char):
+        instances = 0
 
-            self.gram_collection[ngram] += 1
+        for ngrams in self.gram_collection:
+            context_of_gram = ngrams[0]
+            char_of_gram = ngrams[1]
+
+            if context_of_gram == context:
+                if char == char_of_gram or char == "*":
+                    instances += 1
+
+        return instances
 
     def prob(self, context, char):
         ''' Returns the probability of char appearing after context '''
-        current_probability = 1
-        self.vocab.copy()
-        for char in context:
-            if char in self.vocab:
-                current_probability *= 1/(len(self.vocab))
-            else:
-                current_probability = 0
+
+        times_context_found = self.ngramInstanceCounter(context,"*")
+
+        if times_context_found == 0: return 1/(len(self.vocab))
+
+        times_char_after_context_found = self.ngramInstanceCounter(context, char)
+
+        current_probability = times_char_after_context_found / times_context_found
+
         return current_probability
 
     def random_char(self, context):
