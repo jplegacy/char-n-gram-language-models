@@ -92,7 +92,7 @@ class NgramModel(object):
     def prob(self, context, char):
         ''' Returns the probability of char appearing after context '''
 
-        times_context_found = self.ngramInstanceCounter(context,"*")
+        times_context_found = self.ngramInstanceCounter(context, "*")
 
         if times_context_found == 0: return 1/(len(self.vocab))
 
@@ -105,12 +105,30 @@ class NgramModel(object):
     def random_char(self, context):
         ''' Returns a random character based on the given context and the 
             n-grams learned by this model '''
-        pass
+
+        r = random.random()
+
+        summated_prob = 0
+        for letter in sorted(self.vocab):
+            summated_prob += self.prob(context,letter)
+
+            if summated_prob > r:
+                return letter
+
+        return "ERROR"
 
     def random_text(self, length):
         ''' Returns text of the specified character length based on the
             n-grams learned by this model '''
-        pass
+
+        randomized_text = ""
+
+        for times in range(length):
+            padded_text = (start_pad(self.context_len) + randomized_text)[times:self.context_len+times]
+
+            randomized_text += self.random_char(padded_text)
+
+        return randomized_text
 
     def perplexity(self, text):
         ''' Returns the perplexity of text based on the n-grams learned by
@@ -140,24 +158,41 @@ class NgramModelWithInterpolation(NgramModel):
 # Your N-Gram Model Experimentations
 ################################################################################
 
-print(ngrams(3,"abcde"))
-
-m = NgramModel(1, 0)
-m.update("abab")
-print(m.get_vocab())
-# {’b’, ’a’}
-m.update("abcd")
-print(m.get_vocab())
-#{’b’, ’a’, ’c’, ’d’}
-print(m.prob("a", "b"))
-#1.0
-print(m.prob("~", "c"))
-#0.0
-print(m.prob("b", "c"))
-# 0.5
-# Add all code you need for testing your language model as you are
-# developing it as well as your code for running your experiments
-# here.
+# print(ngrams(3,"abcde"))
 #
-# Hint: it may be useful to encapsulate it into multiple functions so
-# that you can easily run any test or experiment at any time.
+# m = NgramModel(0, 0)
+# m.update("abab")
+# print(m.get_vocab())
+# # {’b’, ’a’}
+# m.update("abcd")
+# print(m.get_vocab())
+# #{’b’, ’a’, ’c’, ’d’}
+# print(m.prob("a", "b"))
+# #1.0
+# print(m.prob("~", "c"))
+# #0.0
+# print(m.prob("b", "c"))
+# # 0.5
+
+# m = NgramModel(0, 0)
+# m.update("abab")
+# m.update("abcd")
+# random.seed(1)
+# print([m.random_char("") for i in range(25)]
+# )
+#
+
+# m = NgramModel(1, 0)
+# m.update("abab")
+# m.update("abcd")
+# random.seed(1)
+# print(m.random_text(25))
+
+# m = create_ngram_model(NgramModel, "shakespeare_input.txt", 2)
+# m.random_text(250)
+# m = create_ngram_model(NgramModel, "shakespeare_input.txt", 3)
+# m.random_text(250)
+# m = create_ngram_model(NgramModel, "shakespeare_input.txt", 4)
+# m.random_text(250)
+# m = create_ngram_model(NgramModel, "shakespeare_input.txt", 7)
+# m.random_text(250)
