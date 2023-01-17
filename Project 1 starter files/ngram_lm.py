@@ -20,17 +20,28 @@ def ngrams(c, text):
 
     total_ngrams = []
     padded_text = start_pad(c) + text
-    return ngram_step(padded_text, 0, c, total_ngrams)
+
+    for partition in range(0, int(len(padded_text)-c)):
+        ngram = (padded_text[partition:partition+c], padded_text[partition+c])
+        total_ngrams.append(ngram)
+
+    return total_ngrams
 
 
-def ngram_step(text:str, startIndex:int, endingIndex:int, total_ngrams:list):
+# def ngram_step(text:str, startIndex:int, endingIndex:int, total_ngrams:list):
+#
+#     if endingIndex >= len(text):
+#         return total_ngrams
+#
+#     ngram = (text[startIndex: endingIndex], text[endingIndex])
+#     total_ngrams.append(ngram)
+#     return ngram_step(text, startIndex + 1, endingIndex + 1, total_ngrams)
 
-    if endingIndex >= len(text):
-        return total_ngrams
+# def ngram_step(text,start_index, ending_index, total_ngrams):
+#     for index in range(start_index, ending_index):
+#         text[]
 
-    ngram = (text[startIndex: endingIndex], text[endingIndex])
-    total_ngrams.append(ngram)
-    return ngram_step(text, startIndex + 1, endingIndex + 1, total_ngrams)
+
 
 def create_ngram_model(model_class, path, c=2, k=0):
     ''' Creates and returns a new n-gram model trained on the entire text
@@ -61,7 +72,6 @@ class NgramModel(object):
         self.k_smoothing_co = k
         self.vocab = set()
         self.gram_collection = []
-
     def get_vocab(self):
         ''' Returns the set of characters in the vocab '''
         return self.vocab
@@ -94,7 +104,8 @@ class NgramModel(object):
 
         times_context_found = self.ngramInstanceCounter(context, "*")
 
-        if times_context_found == 0: return 1/(len(self.vocab))
+        if times_context_found == 0:
+            return 1 / (len(self.vocab))
 
         times_char_after_context_found = self.ngramInstanceCounter(context, char)
 
@@ -160,7 +171,7 @@ class NgramModelWithInterpolation(NgramModel):
 
 # print(ngrams(3,"abcde"))
 #
-# m = NgramModel(0, 0)
+# m = NgramModel(1, 0)
 # m.update("abab")
 # print(m.get_vocab())
 # # {’b’, ’a’}
@@ -180,13 +191,13 @@ class NgramModelWithInterpolation(NgramModel):
 # random.seed(1)
 # print([m.random_char("") for i in range(25)]
 # )
-#
 
-# m = NgramModel(1, 0)
-# m.update("abab")
-# m.update("abcd")
-# random.seed(1)
-# print(m.random_text(25))
+
+m = NgramModel(1, 0)
+m.update("abab")
+m.update("abcd")
+random.seed(1)
+print(m.random_text(25))
 
 # m = create_ngram_model(NgramModel, "shakespeare_input.txt", 2)
 # m.random_text(250)
