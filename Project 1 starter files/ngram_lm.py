@@ -14,18 +14,20 @@ def start_pad(c):
         as a pre-processing step to building n-grams. c = n-1 '''
     return '~' * c
 
+def ngram_partitions(size, text):
+    total_ngrams = []
+    for partition in range(0, int(len(text)-size)):
+        ngram = (text[partition:partition+size], text[partition+size])
+        total_ngrams.append(ngram)
+    return total_ngrams
+
 def ngrams(c, text):
     ''' Returns the ngrams of the text as tuples where the first element is
         the length-c context and the second is the character '''
 
-    total_ngrams = []
     padded_text = start_pad(c) + text
 
-    for partition in range(0, int(len(padded_text)-c)):
-        ngram = (padded_text[partition:partition+c], padded_text[partition+c])
-        total_ngrams.append(ngram)
-
-    return total_ngrams
+    return ngram_partitions(c, padded_text)
 
 
 # def ngram_step(text:str, startIndex:int, endingIndex:int, total_ngrams:list):
@@ -144,7 +146,18 @@ class NgramModel(object):
     def perplexity(self, text):
         ''' Returns the perplexity of text based on the n-grams learned by
             this model '''
-        pass
+        ngrams_collection = ngrams(self.context_len, text)
+
+        chance_of_text = 1.0
+        for ngram in ngrams_collection:
+            chance_of_text *= self.prob(ngram[0], ngram[1])
+
+        if chance_of_text == 0:
+            chance_of_text = float("inf")
+
+        entropy = (-1/self.context_len) * math.log2(chance_of_text)
+
+        return 2 ** entropy
 
 ################################################################################
 # N-Gram Model with Interpolation
@@ -207,3 +220,13 @@ print(m.random_text(25))
 # m.random_text(250)
 # m = create_ngram_model(NgramModel, "shakespeare_input.txt", 7)
 # m.random_text(250)
+
+m = NgramModel(1, 0)
+m.update("abab")
+m.update("abcd")
+print(m.perplexity("abcd"))
+# 1.189207115002721
+print(m.perplexity("abca"))
+# inf
+print(m.perplexity("abcda"))
+# 1.515716566510398
