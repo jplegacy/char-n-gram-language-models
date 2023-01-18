@@ -196,9 +196,6 @@ class NgramModel(object):
 
         ngrams_collection = ngrams(self.context_length, text)
 
-        print(ngrams_collection)
-        print(self.gram_collection)
-
         chance_of_text = 1
         for ngram in ngrams_collection:
 
@@ -248,6 +245,12 @@ class NgramModelWithInterpolation(NgramModel):
             summated_prob += gram.prob(partioned_context, char)
 
         return  self.gram_weight * summated_prob
+
+    def average_perplexity(self, text):
+        total_perplexities = 0
+        for gram in self.gram_collections:
+            total_perplexities += gram.perplexity(text)
+        return total_perplexities/len(self.gram_collections)
 
 ################################################################################
 # Your N-Gram Model Experimentations
@@ -340,35 +343,33 @@ class NgramModelWithInterpolation(NgramModel):
 parellel_models = {}
 model_guesses = {}
 
-MAX_MODEL_N_SIZE = 9
-MODEL_K_SMOOTHING = 1
+MAX_MODEL_N_SIZE = 10
+MODEL_K_SMOOTHING = 0
 
 for country in COUNTRY_CODES:
 
     parellel_models[country] = NgramModelWithInterpolation(MAX_MODEL_N_SIZE, MODEL_K_SMOOTHING)
     model_guesses[country] = {}
-    with open("./train/"+country+'.txt', encoding='ISO-8859-1') as f:
-        lines = f.readlines()
-        for line in lines:
-            parellel_models[country].update(line.strip('\n'))
+    with open("./train/" + country + '.txt', encoding='ISO-8859-1') as f:
+        text = f.read().replace('\n', '')
+        parellel_models[country].update(text)
 
     for country_to_guess in COUNTRY_CODES:
         with open("./val/"+country_to_guess+'.txt', encoding='ISO-8859-1') as f:
-            lines = f.readlines()
+            text = f.read().replace('\n', '')
             model_guesses[country][country_to_guess] = 0
 
-            for line in lines:
-                ngrams_of_line = ngrams(MAX_MODEL_N_SIZE, line)
+            ngrams_of_text = ngrams(MAX_MODEL_N_SIZE, text)
+            for gram in ngrams_of_text:
+                probability_of_lang = parellel_models[country].prob(gram[0],gram[1])
+                model_guesses[country][country_to_guess] += probability_of_lang
 
-                for gram in ngrams_of_line:
-                    probability_of_lang = parellel_models[country].prob(gram[0],gram[1])
-                    model_guesses[country][country_to_guess] += probability_of_lang
 
 
 for key in model_guesses.keys():
     print("MODEL: ",key)
     for country_guess in model_guesses[key].keys():
-        print(key, " guess for ",country_guess, " was ", model_guesses[key][country_guess])
+        print(key, " guess for ",country_guess, " was ", model_guesses[key][country_guess] )
 
 
     # for model in parellel_models.values():
