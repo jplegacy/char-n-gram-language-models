@@ -70,10 +70,10 @@ class NgramModel(object):
     ''' A basic n-gram model using add-k smoothing '''
 
     def __init__(self, c, k):
-        self.context_len = c
+        self.context_length = c
         self.k_smoothing_co = k
         self.vocab = set()
-        self.gram_collection = []
+        self.gram_collection = {}
     def get_vocab(self):
         ''' Returns the set of characters in the vocab '''
         return self.vocab
@@ -81,35 +81,82 @@ class NgramModel(object):
     def update(self, text):
         ''' Updates the model n-grams based on text '''
 
-        newly_collected_grams = ngrams(self.context_len, text)
+        newly_collected_grams = ngrams(self.context_length, text)
 
         for ngram in newly_collected_grams:
             self.vocab.add(ngram[1])
-            self.gram_collection.append(ngram)
+            self.dictionary_entry_controller(ngram[0], ngram[1])
+
+    def dictionary_entry_controller(self, context, char):
+        if not self.is_gram_collected(context, "*"):
+            self.gram_collection[context] = {}
+
+        if not self.is_gram_collected(context, char):
+            self.gram_collection[context][char] = 0
+
+        self.gram_collection[context][char] += 1
+
+    def is_gram_collected(self, context, char):
+        if context not in self.gram_collection.keys():
+            return False
+
+        if char != "*" and char not in self.gram_collection[context].keys() :
+            return False
+
+        return True
+
+    def gram_entries(self, context, char):
+        if not self.is_gram_collected(context, char):
+            return 0
+
+        elif char == "*":
+            instances = 0
+            for chars in self.gram_collection[context].keys():
+                instances += self.gram_collection[context][chars]
+
+            return instances
+
+        return self.gram_collection[context][char]
+
+    # def ngramInstances(self, context, char):
+    #     if not self.context_collected(context):
+    #         return 0
+    #
+    #     context_instances = self.gram_collection[context]
+    #
+    #     if char == "*":
+    #         return len(context_instances)
+    #
+    #     counter = 0
+    #     for item in context_instances:
+    #         if item == counter:
+    #             counter+=1
+    #
+    #     return counter
 
     #helper
-    def ngramInstanceCounter(self, context, char):
-        instances = 0
-
-        for ngrams in self.gram_collection:
-            context_of_gram = ngrams[0]
-            char_of_gram = ngrams[1]
-
-            if context_of_gram == context:
-                if char == char_of_gram or char == "*":
-                    instances += 1
-
-        return instances
+    # def ngramInstanceCounter(self, context, char):
+    #     instances = 0
+    #
+    #     for ngrams in self.gram_collection:
+    #         context_of_gram = ngrams[0]
+    #         char_of_gram = ngrams[1]
+    #
+    #         if context_of_gram == context:
+    #             if char == char_of_gram or char == "*":
+    #                 instances += 1
+    #
+    #     return instances
 
     def prob(self, context, char):
-        ''' Returns the probability of char appearing after context '''
+        ''' Returns the pro bability of char appearing after context '''
 
-        times_context_found = self.ngramInstanceCounter(context, "*")
+        times_context_found = self.gram_entries(context, "*")
 
         if times_context_found == 0:
             return 1 / (len(self.vocab))
 
-        times_char_after_context_found = self.ngramInstanceCounter(context, char)
+        times_char_after_context_found = self.gram_entries(context, char)
 
         current_probability = times_char_after_context_found / times_context_found
 
@@ -123,7 +170,7 @@ class NgramModel(object):
 
         summated_prob = 0
         for letter in sorted(self.vocab):
-            summated_prob += self.prob(context,letter)
+            summated_prob += self.prob(context, letter)
 
             if summated_prob > r:
                 return letter
@@ -137,7 +184,7 @@ class NgramModel(object):
         randomized_text = ""
 
         for times in range(length):
-            padded_text = (start_pad(self.context_len) + randomized_text)[times:self.context_len+times]
+            padded_text = (start_pad(self.context_length) + randomized_text)[times:self.context_length + times]
 
             randomized_text += self.random_char(padded_text)
 
@@ -146,16 +193,21 @@ class NgramModel(object):
     def perplexity(self, text):
         ''' Returns the perplexity of text based on the n-grams learned by
             this model '''
-        ngrams_collection = ngrams(self.context_len, text)
 
-        chance_of_text = 1.0
+        ngrams_collection = ngrams(self.context_length, text)
+
+        print(ngrams_collection)
+        print(self.gram_collection)
+
+        chance_of_text = 0.0
         for ngram in ngrams_collection:
-            chance_of_text *= self.prob(ngram[0], ngram[1])
+
+            chance_of_text += math.log2(self.prob(ngram[0], ngram[1]))
 
         if chance_of_text == 0:
-            chance_of_text = float("inf")
+            return float("inf")
 
-        entropy = (-1/self.context_len) * math.log2(chance_of_text)
+        entropy = (-1 / self.context_length) * chance_of_text
 
         return 2 ** entropy
 
@@ -191,6 +243,8 @@ class NgramModelWithInterpolation(NgramModel):
 # m.update("abcd")
 # print(m.get_vocab())
 # #{’b’, ’a’, ’c’, ’d’}
+# print(m.gram_collection)
+#
 # print(m.prob("a", "b"))
 # #1.0
 # print(m.prob("~", "c"))
@@ -204,29 +258,29 @@ class NgramModelWithInterpolation(NgramModel):
 # random.seed(1)
 # print([m.random_char("") for i in range(25)]
 # )
-
-
-m = NgramModel(1, 0)
-m.update("abab")
-m.update("abcd")
-random.seed(1)
-print(m.random_text(25))
+#
+#
+# m = NgramModel(1, 0)
+# m.update("abab")
+# m.update("abcd")
+# random.seed(1)
+# print(m.random_text(25))
 
 # m = create_ngram_model(NgramModel, "shakespeare_input.txt", 2)
-# m.random_text(250)
+# print(m.random_text(250))
 # m = create_ngram_model(NgramModel, "shakespeare_input.txt", 3)
-# m.random_text(250)
+# print(m.random_text(250))
 # m = create_ngram_model(NgramModel, "shakespeare_input.txt", 4)
-# m.random_text(250)
+# print(m.random_text(250))
 # m = create_ngram_model(NgramModel, "shakespeare_input.txt", 7)
-# m.random_text(250)
+# print(m.random_text(250))
 
 m = NgramModel(1, 0)
 m.update("abab")
 m.update("abcd")
 print(m.perplexity("abcd"))
-# 1.189207115002721
+# # 1.189207115002721
 print(m.perplexity("abca"))
-# inf
+# # inf
 print(m.perplexity("abcda"))
-# 1.515716566510398
+# # 1.515716566510398
