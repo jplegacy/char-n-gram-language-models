@@ -153,7 +153,7 @@ class NgramModel(object):
 
         times_context_found = self.gram_entries(context, "*") + self.k_smoothing_co * len(self.vocab)
 
-        if times_context_found == 0:
+        if times_context_found == 0  :
             return 1 / (len(self.vocab))
 
         times_char_after_context_found = self.gram_entries(context, char) + self.k_smoothing_co
@@ -224,22 +224,30 @@ class NgramModelWithInterpolation(NgramModel):
         self.longest_context = c
         self.gram_collections = []
 
-        for gram in range(0, self.longest_context):
+        for gram in range(0, self.longest_context + 1):
             self.gram_collections.append(NgramModel(gram, k))
 
-
-        self.gram_weight = 1/c
+        self.gram_weight = 1/(self.longest_context+1)
 
     def update(self, text):
         for gram in self.gram_collections:
             gram.update(text)
 
     def prob(self, context, char):
+        # grams_possible = []
+        # for gram in self.gram_collections:
+        #     for contexts in gram.gram_collection.keys():
+        #         if context[-1] == char:
+        #             gram
         summated_prob = 0
-        for x, gram in enumerate(self.gram_collections):
-            summated_prob += self.gram_weight * gram.prob(context, char)
+        for gram in self.gram_collections:
+            partioned_context = context[-gram.context_length:]
+            if gram.context_length == 0:
+                partioned_context = ''
 
-        return summated_prob
+            summated_prob += gram.prob(partioned_context, char)
+
+        return  self.gram_weight * summated_prob
 
 ################################################################################
 # Your N-Gram Model Experimentations
@@ -310,20 +318,20 @@ class NgramModelWithInterpolation(NgramModel):
 # # 0.25
 
 
-m = NgramModelWithInterpolation(1, 0)
-m.update("abab")
-print(m.prob("a", "a"))
-# 0.25
-print(m.prob("a", "b"))
-# 0.75
+# m = NgramModelWithInterpolation(1, 0)
+# m.update("abab")
+# print(m.prob("a", "a"))
+# # 0.25
+# print(m.prob("a", "b"))
+# # 0.75
 # m = NgramModelWithInterpolation(2, 1)
-# m.update(’abab’)
-# m.update(’abcd’)
-# m.prob(’~a’, ’b’)
-# 0.4682539682539682
-# m.prob(’ba’, ’b’)
-# 0.4349206349206349
-# m.prob(’~c’, ’d’)
-# 0.27222222222222225
-# m.prob(’bc’, ’d’)
-# 0.3222222222222222
+# m.update("abab")
+# m.update("abcd")
+# print(m.prob("~a", "b"))
+# # 0.4682539682539682
+# print(m.prob("ba", "b"))
+# # 0.4349206349206349
+# print(m.prob("~c", "d"))
+# # 0.27222222222222225
+# print(m.prob("bc", "d"))
+# # 0.3222222222222222
