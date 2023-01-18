@@ -335,3 +335,43 @@ class NgramModelWithInterpolation(NgramModel):
 # # 0.27222222222222225
 # print(m.prob("bc", "d"))
 # # 0.3222222222222222
+
+
+parellel_models = {}
+model_guesses = {}
+
+MAX_MODEL_N_SIZE = 9
+MODEL_K_SMOOTHING = 1
+
+for country in COUNTRY_CODES:
+
+    parellel_models[country] = NgramModelWithInterpolation(MAX_MODEL_N_SIZE, MODEL_K_SMOOTHING)
+    model_guesses[country] = {}
+    with open("./train/"+country+'.txt', encoding='ISO-8859-1') as f:
+        lines = f.readlines()
+        for line in lines:
+            parellel_models[country].update(line.strip('\n'))
+
+    for country_to_guess in COUNTRY_CODES:
+        with open("./val/"+country_to_guess+'.txt', encoding='ISO-8859-1') as f:
+            lines = f.readlines()
+            model_guesses[country][country_to_guess] = 0
+
+            for line in lines:
+                ngrams_of_line = ngrams(MAX_MODEL_N_SIZE, line)
+
+                for gram in ngrams_of_line:
+                    probability_of_lang = parellel_models[country].prob(gram[0],gram[1])
+                    model_guesses[country][country_to_guess] += probability_of_lang
+
+
+for key in model_guesses.keys():
+    print("MODEL: ",key)
+    for country_guess in model_guesses[key].keys():
+        print(key, " guess for ",country_guess, " was ", model_guesses[key][country_guess])
+
+
+    # for model in parellel_models.values():
+    #     for ngramMod in model.gram_collections:
+    #         print(ngramMod.gram_collection)
+
