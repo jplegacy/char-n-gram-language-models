@@ -151,12 +151,12 @@ class NgramModel(object):
     def prob(self, context, char):
         ''' Returns the pro bability of char appearing after context '''
 
-        times_context_found = self.gram_entries(context, "*")
+        times_context_found = self.gram_entries(context, "*") + self.k_smoothing_co * len(self.vocab)
 
         if times_context_found == 0:
             return 1 / (len(self.vocab))
 
-        times_char_after_context_found = self.gram_entries(context, char)
+        times_char_after_context_found = self.gram_entries(context, char) + self.k_smoothing_co
 
         current_probability = times_char_after_context_found / times_context_found
 
@@ -199,15 +199,15 @@ class NgramModel(object):
         print(ngrams_collection)
         print(self.gram_collection)
 
-        chance_of_text = 0.0
+        chance_of_text = 1
         for ngram in ngrams_collection:
 
-            chance_of_text += math.log2(self.prob(ngram[0], ngram[1]))
+            chance_of_text *= self.prob(ngram[0], ngram[1])
 
-        if chance_of_text == 0:
+        if chance_of_text == 0.0:
             return float("inf")
 
-        entropy = (-1 / self.context_length) * chance_of_text
+        entropy = (-1 / self.context_length) * (math.log2(chance_of_text)/len(text))
 
         return 2 ** entropy
 
@@ -219,16 +219,27 @@ class NgramModelWithInterpolation(NgramModel):
     ''' An n-gram model with interpolation '''
 
     def __init__(self, c, k):
-        pass
+        self.K_smoothing_coe = 0
+        self.vocab = set()
+        self.longest_context = c
+        self.gram_collections = []
 
-    def get_vocab(self):
-        pass
+        for gram in range(0, self.longest_context):
+            self.gram_collections.append(NgramModel(gram, k))
+
+
+        self.gram_weight = 1/c
 
     def update(self, text):
-        pass
+        for gram in self.gram_collections:
+            gram.update(text)
 
     def prob(self, context, char):
-        pass
+        summated_prob = 0
+        for x, gram in enumerate(self.gram_collections):
+            summated_prob += self.gram_weight * gram.prob(context, char)
+
+        return summated_prob
 
 ################################################################################
 # Your N-Gram Model Experimentations
@@ -275,12 +286,44 @@ class NgramModelWithInterpolation(NgramModel):
 # m = create_ngram_model(NgramModel, "shakespeare_input.txt", 7)
 # print(m.random_text(250))
 
-m = NgramModel(1, 0)
+# m = NgramModel(1, 0)
+# m.update("abab")
+# m.update("abcd")
+# print(m.perplexity("abcd"))
+# # # 1.189207115002721
+# print(m.perplexity("abca"))
+# # # inf
+# print(m.perplexity("abcda"))
+# # # 1.515716566510398
+
+
+# m = NgramModel(1, 1)
+# (m.update("abab"))
+# (m.update("abcd"))
+# print(m.prob("a", "a"))
+# # 0.14285714285714285
+# print(m.prob("a", "b"))
+# # 0.5714285714285714
+# print(m.prob("c", "d"))
+# # 0.4
+# print(m.prob("d", "a"))
+# # 0.25
+
+
+m = NgramModelWithInterpolation(1, 0)
 m.update("abab")
-m.update("abcd")
-print(m.perplexity("abcd"))
-# # 1.189207115002721
-print(m.perplexity("abca"))
-# # inf
-print(m.perplexity("abcda"))
-# # 1.515716566510398
+print(m.prob("a", "a"))
+# 0.25
+print(m.prob("a", "b"))
+# 0.75
+# m = NgramModelWithInterpolation(2, 1)
+# m.update(’abab’)
+# m.update(’abcd’)
+# m.prob(’~a’, ’b’)
+# 0.4682539682539682
+# m.prob(’ba’, ’b’)
+# 0.4349206349206349
+# m.prob(’~c’, ’d’)
+# 0.27222222222222225
+# m.prob(’bc’, ’d’)
+# 0.3222222222222222
