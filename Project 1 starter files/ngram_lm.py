@@ -1,4 +1,5 @@
-import math, random
+import math
+import random
 
 # PLEASE do not delete or modify the comments that divide the code
 # into sections, like the following comment.
@@ -9,53 +10,38 @@ import math, random
 
 COUNTRY_CODES = ['af', 'cn', 'de', 'fi', 'fr', 'in', 'ir', 'pk', 'za']
 
+
 def start_pad(c):
-    ''' Returns a padding string of length c to append to the front of text
-        as a pre-processing step to building n-grams. c = n-1 '''
+    """ Returns a padding string of length c to append to the front of text
+        as a pre-processing step to building n-grams. c = n-1 """
     return '~' * c
 
-def ngram_partitions(size, text):
-    total_ngrams = []
-    for partition in range(0, int(len(text)-size)):
-        ngram = (text[partition:partition+size], text[partition+size])
-        total_ngrams.append(ngram)
-    return total_ngrams
 
 def ngrams(c, text):
-    ''' Returns the ngrams of the text as tuples where the first element is
-        the length-c context and the second is the character '''
+    """ Returns the ngrams of the text as tuples where the first element is
+        the length-c context and the second is the character """
 
     padded_text = start_pad(c) + text
 
-    return ngram_partitions(c, padded_text)
-
-
-# def ngram_step(text:str, startIndex:int, endingIndex:int, total_ngrams:list):
-#
-#     if endingIndex >= len(text):
-#         return total_ngrams
-#
-#     ngram = (text[startIndex: endingIndex], text[endingIndex])
-#     total_ngrams.append(ngram)
-#     return ngram_step(text, startIndex + 1, endingIndex + 1, total_ngrams)
-
-# def ngram_step(text,start_index, ending_index, total_ngrams):
-#     for index in range(start_index, ending_index):
-#         text[]
-
+    total_ngrams = []
+    for partition in range(0, int(len(padded_text) - c)):
+        ngram = (padded_text[partition:partition + c], padded_text[partition + c])
+        total_ngrams.append(ngram)
+    return total_ngrams
 
 
 def create_ngram_model(model_class, path, c=2, k=0):
-    ''' Creates and returns a new n-gram model trained on the entire text
-        found in the path file '''
+    """ Creates and returns a new n-gram model trained on the entire text
+        found in the path file """
     model = model_class(c, k)
     with open(path, encoding='utf-8', errors='ignore') as f:
         model.update(f.read())
     return model
 
+
 def create_ngram_model_lines(model_class, path, c=2, k=0):
-    '''Creates and returns a new n-gram model trained line by line on the
-        text found in the path file. '''
+    """Creates and returns a new n-gram model trained line by line on the
+        text found in the path file. """
     model = model_class(c, k)
     with open(path, encoding='utf-8', errors='ignore') as f:
         for line in f:
@@ -66,28 +52,32 @@ def create_ngram_model_lines(model_class, path, c=2, k=0):
 # Basic N-Gram Model
 ################################################################################
 
+
 class NgramModel(object):
-    ''' A basic n-gram model using add-k smoothing '''
+    """ A basic n-gram model using add-k smoothing """
 
     def __init__(self, c, k):
         self.context_length = c
         self.k_smoothing_co = k
         self.vocab = set()
         self.gram_collection = {}
+
     def get_vocab(self):
-        ''' Returns the set of characters in the vocab '''
+        """ Returns the set of characters in the vocab """
         return self.vocab
 
     def update(self, text):
-        ''' Updates the model n-grams based on text '''
+        """ Updates the model n-grams based on text """
 
         newly_collected_grams = ngrams(self.context_length, text)
 
         for ngram in newly_collected_grams:
             self.vocab.add(ngram[1])
-            self.dictionary_entry_controller(ngram[0], ngram[1])
+            self.gram_counter(ngram[0], ngram[1])
 
-    def dictionary_entry_controller(self, context, char):
+    def gram_counter(self, context, char):
+        """ Updates the model n-grams based on text """
+
         if not self.is_gram_collected(context, "*"):
             self.gram_collection[context] = {}
 
@@ -100,7 +90,7 @@ class NgramModel(object):
         if context not in self.gram_collection.keys():
             return False
 
-        if char != "*" and char not in self.gram_collection[context].keys() :
+        if char != "*" and char not in self.gram_collection[context].keys():
             return False
 
         return True
@@ -118,38 +108,8 @@ class NgramModel(object):
 
         return self.gram_collection[context][char]
 
-    # def ngramInstances(self, context, char):
-    #     if not self.context_collected(context):
-    #         return 0
-    #
-    #     context_instances = self.gram_collection[context]
-    #
-    #     if char == "*":
-    #         return len(context_instances)
-    #
-    #     counter = 0
-    #     for item in context_instances:
-    #         if item == counter:
-    #             counter+=1
-    #
-    #     return counter
-
-    #helper
-    # def ngramInstanceCounter(self, context, char):
-    #     instances = 0
-    #
-    #     for ngrams in self.gram_collection:
-    #         context_of_gram = ngrams[0]
-    #         char_of_gram = ngrams[1]
-    #
-    #         if context_of_gram == context:
-    #             if char == char_of_gram or char == "*":
-    #                 instances += 1
-    #
-    #     return instances
-
     def prob(self, context, char):
-        ''' Returns the pro bability of char appearing after context '''
+        """ Returns the pro bability of char appearing after context """
 
         times_context_found = self.gram_entries(context, "*") + self.k_smoothing_co * len(self.vocab)
 
@@ -163,8 +123,8 @@ class NgramModel(object):
         return current_probability
 
     def random_char(self, context):
-        ''' Returns a random character based on the given context and the 
-            n-grams learned by this model '''
+        """ Returns a random character based on the given context and the
+            n-grams learned by this model """
 
         r = random.random()
 
@@ -178,8 +138,8 @@ class NgramModel(object):
         return "ERROR"
 
     def random_text(self, length):
-        ''' Returns text of the specified character length based on the
-            n-grams learned by this model '''
+        """ Returns text of the specified character length based on the
+            n-grams learned by this model """
 
         randomized_text = ""
 
@@ -191,8 +151,8 @@ class NgramModel(object):
         return randomized_text
 
     def perplexity(self, text):
-        ''' Returns the perplexity of text based on the n-grams learned by
-            this model '''
+        """ Returns the perplexity of text based on the n-grams learned by
+            this model """
 
         ngrams_collection = ngrams(self.context_length, text)
 
@@ -212,10 +172,11 @@ class NgramModel(object):
 # N-Gram Model with Interpolation
 ################################################################################
 
-class NgramModelWithInterpolation(NgramModel):
-    ''' An n-gram model with interpolation '''
 
-    def __init__(self, c, k):
+class NgramModelWithInterpolation(NgramModel):
+    """ An n-gram model with interpolation """
+
+    def __init__(self, c, k, lamda_list=None):
         self.K_smoothing_coe = 0
         self.vocab = set()
         self.longest_context = c
@@ -224,155 +185,173 @@ class NgramModelWithInterpolation(NgramModel):
         for gram in range(0, self.longest_context + 1):
             self.gram_collections.append(NgramModel(gram, k))
 
-        self.gram_weight = 1/(self.longest_context+1)
+        if lamda_list is None:
+            self.gram_weight = [1/(self.longest_context + 1) for n in range(c+1)]
+        else:
+            self.gram_weight = lamda_list
 
     def update(self, text):
         for gram in self.gram_collections:
             gram.update(text)
 
     def prob(self, context, char):
-        # grams_possible = []
-        # for gram in self.gram_collections:
-        #     for contexts in gram.gram_collection.keys():
-        #         if context[-1] == char:
-        #             gram
         summated_prob = 0
         for gram in self.gram_collections:
-            partioned_context = context[-gram.context_length:]
+            partitioned_context = context[-gram.context_length:]
             if gram.context_length == 0:
-                partioned_context = ''
+                partitioned_context = ''
 
-            summated_prob += gram.prob(partioned_context, char)
+            summated_prob += gram.prob(partitioned_context, char)
 
-        return  self.gram_weight * summated_prob
+        return self.gram_weight[gram.context_length] * summated_prob
 
-    def average_perplexity(self, text):
-        total_perplexities = 0
-        for gram in self.gram_collections:
-            total_perplexities += gram.perplexity(text)
-        return total_perplexities/len(self.gram_collections)
+    # def average_perplexity(self, text):
+    #     total_perplexities = 0
+    #     for gram in self.gram_collections:
+    #         total_perplexities += gram.perplexity(text)
+    #     return total_perplexities/len(self.gram_collections)
 
 ################################################################################
 # Your N-Gram Model Experimentations
 ################################################################################
 
-# print(ngrams(3,"abcde"))
-#
-# m = NgramModel(1, 0)
-# m.update("abab")
-# print(m.get_vocab())
-# # {’b’, ’a’}
-# m.update("abcd")
-# print(m.get_vocab())
-# #{’b’, ’a’, ’c’, ’d’}
-# print(m.gram_collection)
-#
-# print(m.prob("a", "b"))
-# #1.0
-# print(m.prob("~", "c"))
-# #0.0
-# print(m.prob("b", "c"))
-# # 0.5
 
-# m = NgramModel(0, 0)
-# m.update("abab")
-# m.update("abcd")
-# random.seed(1)
-# print([m.random_char("") for i in range(25)]
-# )
-#
-#
-# m = NgramModel(1, 0)
-# m.update("abab")
-# m.update("abcd")
-# random.seed(1)
-# print(m.random_text(25))
-
-# m = create_ngram_model(NgramModel, "shakespeare_input.txt", 2)
-# print(m.random_text(250))
-# m = create_ngram_model(NgramModel, "shakespeare_input.txt", 3)
-# print(m.random_text(250))
-# m = create_ngram_model(NgramModel, "shakespeare_input.txt", 4)
-# print(m.random_text(250))
-# m = create_ngram_model(NgramModel, "shakespeare_input.txt", 7)
-# print(m.random_text(250))
-
-# m = NgramModel(1, 0)
-# m.update("abab")
-# m.update("abcd")
-# print(m.perplexity("abcd"))
-# # # 1.189207115002721
-# print(m.perplexity("abca"))
-# # # inf
-# print(m.perplexity("abcda"))
-# # # 1.515716566510398
+def test_ngrams():
+    print(ngrams(3, "abcde"))
 
 
-# m = NgramModel(1, 1)
-# (m.update("abab"))
-# (m.update("abcd"))
-# print(m.prob("a", "a"))
-# # 0.14285714285714285
-# print(m.prob("a", "b"))
-# # 0.5714285714285714
-# print(m.prob("c", "d"))
-# # 0.4
-# print(m.prob("d", "a"))
-# # 0.25
+def test_update():
+    m = NgramModel(1, 0)
+    m.update("abab")
+    print(m.get_vocab())
+    # {’b’, ’a’}
+    m.update("abcd")
+    print(m.get_vocab())
+    # {’b’, ’a’, ’c’, ’d’}
+    print(m.prob("a", "b"))
+    # 1.0
+    print(m.prob("~", "c"))
+    # 0.0
+    print(m.prob("b", "c"))
+    # 0.5
 
 
-# m = NgramModelWithInterpolation(1, 0)
-# m.update("abab")
-# print(m.prob("a", "a"))
-# # 0.25
-# print(m.prob("a", "b"))
-# # 0.75
-# m = NgramModelWithInterpolation(2, 1)
-# m.update("abab")
-# m.update("abcd")
-# print(m.prob("~a", "b"))
-# # 0.4682539682539682
-# print(m.prob("ba", "b"))
-# # 0.4349206349206349
-# print(m.prob("~c", "d"))
-# # 0.27222222222222225
-# print(m.prob("bc", "d"))
-# # 0.3222222222222222
+def test_random_char():
+    m = NgramModel(0, 0)
+    m.update("abab")
+    m.update("abcd")
+    random.seed(1)
+    print([m.random_char("") for i in range(25)])
 
 
-parellel_models = {}
+def test_random_test():
+    m = NgramModel(1, 0)
+    m.update("abab")
+    m.update("abcd")
+    random.seed(1)
+    print(m.random_text(25))
+
+
+def test_random_test_shakespear_text():
+    m = create_ngram_model(NgramModel, "shakespeare_input.txt", 2)
+    print(m.random_text(250))
+    m = create_ngram_model(NgramModel, "shakespeare_input.txt", 3)
+    print(m.random_text(250))
+    m = create_ngram_model(NgramModel, "shakespeare_input.txt", 4)
+    print(m.random_text(250))
+    m = create_ngram_model(NgramModel, "shakespeare_input.txt", 7)
+    print(m.random_text(250))
+
+
+def test_perplexity():
+    m = NgramModel(1, 0)
+    m.update("abab")
+    m.update("abcd")
+    print(m.perplexity("abcd"))
+    # # 1.189207115002721
+    print(m.perplexity("abca"))
+    # # inf
+    print(m.perplexity("abcda"))
+    # # 1.515716566510398
+
+
+def test_prob_with_k():
+    m = NgramModel(1, 1)
+    (m.update("abab"))
+    (m.update("abcd"))
+    print(m.prob("a", "a"))
+    # 0.14285714285714285
+    print(m.prob("a", "b"))
+    # 0.5714285714285714
+    print(m.prob("c", "d"))
+    # 0.4
+    print(m.prob("d", "a"))
+    # 0.25
+
+
+def test_prob_with_interpolation():
+    m = NgramModelWithInterpolation(1, 0)
+    m.update("abab")
+    print(m.prob("a", "a"))
+    # 0.25
+    print(m.prob("a", "b"))
+    # 0.75
+    m = NgramModelWithInterpolation(2, 1)
+    m.update("abab")
+    m.update("abcd")
+    print(m.prob("~a", "b"))
+    # 0.4682539682539682
+    print(m.prob("ba", "b"))
+    # 0.4349206349206349
+    print(m.prob("~c", "d"))
+    # 0.27222222222222225
+    print(m.prob("bc", "d"))
+    # 0.3222222222222222
+
+
+parallel_models = {}
 model_guesses = {}
 
-MAX_MODEL_N_SIZE = 10
+#########################
+#   PARAMETERS
+#########################
+MAX_MODEL_N_SIZE = 3
+
+# LAMDA_LIST MUST BE SAME SIZE AS INPUTTED MAX N SIZE + 1
+LAMDA_LIST = [1/4, 1/4, 1/4, 1/4]
+
 MODEL_K_SMOOTHING = 0
 
-for country in COUNTRY_CODES:
 
-    parellel_models[country] = NgramModelWithInterpolation(MAX_MODEL_N_SIZE, MODEL_K_SMOOTHING)
-    model_guesses[country] = {}
-    with open("./train/" + country + '.txt', encoding='ISO-8859-1') as f:
-        text = f.read().replace('\n', '')
-        parellel_models[country].update(text)
-
-    for country_to_guess in COUNTRY_CODES:
-        with open("./val/"+country_to_guess+'.txt', encoding='ISO-8859-1') as f:
-            text = f.read().replace('\n', '')
-            model_guesses[country][country_to_guess] = 0
-
-            ngrams_of_text = ngrams(MAX_MODEL_N_SIZE, text)
-            for gram in ngrams_of_text:
-                probability_of_lang = parellel_models[country].prob(gram[0],gram[1])
-                model_guesses[country][country_to_guess] += probability_of_lang
+def create_models():
+    for country in COUNTRY_CODES:
+        parallel_models[country] = NgramModelWithInterpolation(MAX_MODEL_N_SIZE, MODEL_K_SMOOTHING, LAMDA_LIST)
+        model_guesses[country] = {}
+        with open("./train/" + country + '.txt', encoding='ISO-8859-1') as training_text:
+            text = training_text.read().replace('\n', '')
+            parallel_models[country].update(text)
 
 
+def evaluate_models():
+    for country in COUNTRY_CODES:
+        for country_to_guess in COUNTRY_CODES:
+            with open("./val/"+country_to_guess+'.txt', encoding='ISO-8859-1') as valuation_text:
+                text = valuation_text.read().replace('\n', '')
+                model_guesses[country][country_to_guess] = 0
 
-for key in model_guesses.keys():
-    print("MODEL: ",key)
-    for country_guess in model_guesses[key].keys():
-        print(key, " guess for ",country_guess, " was ", model_guesses[key][country_guess] )
+                ngrams_of_text = ngrams(MAX_MODEL_N_SIZE, text)
+                for gram in ngrams_of_text:
+                    probability_of_lang = parallel_models[country].prob(gram[0], gram[1])
+                    model_guesses[country][country_to_guess] += probability_of_lang
 
 
-    # for model in parellel_models.values():
-    #     for ngramMod in model.gram_collections:
-    #         print(ngramMod.gram_collection)
+def results():
+    for key in model_guesses.keys():
+        print("MODEL: ", key)
+        for country_guess in model_guesses[key].keys():
+            print(key, " guess for ", country_guess, " was ", model_guesses[key][country_guess])
 
+
+create_models()
+evaluate_models()
+results()
