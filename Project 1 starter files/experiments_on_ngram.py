@@ -62,16 +62,16 @@ import random
 # print(m.perplexity("abcda"))
 # # # 1.515716566510398
 
-m = ngram_lm.create_ngram_model(ngram_lm.NgramModel, "shakespeare_input.txt", 2, 1)
-with open("shakespeare_sonnets.txt") as f:
-    print(m.perplexity(f.read()))
-
-with open("nytimes_article.txt", encoding='ISO-8859-1') as f:
-    print(m.perplexity(f.read()))
-
-with open("shakespeare_input.txt", encoding='ISO-8859-1') as f:
-    print(m.perplexity(f.read()))
-
+# m = ngram_lm.create_ngram_model(ngram_lm.NgramModel, "shakespeare_input.txt", 16, 1)
+# with open("shakespeare_sonnets.txt") as f:
+#     print(m.perplexity(f.read()))
+#
+# with open("nytimes_article.txt", encoding='ISO-8859-1') as f:
+#     print(m.perplexity(f.read()))
+#
+# with open("shakespeare_input.txt", encoding='ISO-8859-1') as f:
+#     print(m.perplexity(f.read()))
+#
 
 #
 # m = ngram_lm.NgramModel(1, 1)
@@ -87,20 +87,20 @@ with open("shakespeare_input.txt", encoding='ISO-8859-1') as f:
 # # 0.25
 #
 #
-# m = ngram_lm.NgramModelWithInterpolation(1, 0)
-# m.update("abab")
-# print(m.prob("a", "a"))
-# # 0.25
-# print(m.prob("a", "b"))
-# # 0.75
-# m = ngram_lm.NgramModelWithInterpolation(2, 1)
-# m.update("abab")
-# m.update("abcd")
-# print(m.prob("~a", "b"))
-# # 0.4682539682539682
-# print(m.prob("ba", "b"))
-# # 0.4349206349206349
-# print(m.prob("~c", "d"))
-# # 0.27222222222222225
-# print(m.prob("bc", "d"))
-# # 0.3222222222222222
+m = ngram_lm.NgramModelWithInterpolation(1, 0)
+m.update("abab")
+print(m.prob("a", "a"))
+# 0.25
+print(m.prob("a", "b"))
+# 0.75
+m = ngram_lm.NgramModelWithInterpolation(2, 1)
+m.update("abab")
+m.update("abcd")
+print(m.prob("~a", "b"))
+# 0.4682539682539682
+print(m.prob("ba", "b"))
+# 0.4349206349206349
+print(m.prob("~c", "d"))
+# 0.27222222222222225
+print(m.prob("bc", "d"))
+# 0.3222222222222222
